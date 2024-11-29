@@ -18,6 +18,7 @@ import java.time.ZoneId
 
 
 fun main() {
+    //windows: ./chrome --remote-debugging-port=9222 --user-data-dir='D:\temp\aa1'
     val options = ChromeOptions().apply {
         setExperimentalOption("debuggerAddress","localhost:9222")
     }
@@ -41,8 +42,8 @@ fun main() {
         execute
     }
      })
-//    chromeDriver.get("https://space.bilibili.com/437966767/fans/follow?tagid=-1")
-    chromeDriver.navigate().refresh()
+    chromeDriver.get("https://space.bilibili.com/437966767/fans/follow?tagid=-1")
+//    chromeDriver.navigate().refresh()
     Thread.sleep(1000L)
 
 }
