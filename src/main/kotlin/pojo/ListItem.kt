@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialName
 @Serializable
 data class ListItem (
 
-  @SerialName("mid"             ) var mid            : Int?            = null,
+  @SerialName("mid"             ) var mid            : Long?            = null,
   @SerialName("attribute"       ) var attribute      : Int?            = null,
   @SerialName("mtime"           ) var mtime          : Int?            = null,
   @SerialName("tag"             ) var tag            : String?         = null,
