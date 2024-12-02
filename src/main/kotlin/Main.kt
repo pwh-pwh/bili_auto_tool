@@ -31,7 +31,15 @@ fun main() {
         setExperimentalOption("debuggerAddress", "localhost:9222")
     }
     val chromeDriver = ChromeDriver(options)
-    println(chromeDriver.title)
+    File("result.csv").delete()
+    exportAllFollowByMid(chromeDriver,"437966767")
+
+
+    Thread.sleep(1000L)
+
+}
+
+fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
     NetworkInterceptor(chromeDriver, Filter { next ->
         HttpHandler { req ->
             val execute = next.execute(req)
@@ -51,10 +59,7 @@ fun main() {
             execute
         }
     })
-    chromeDriver.get("https://space.bilibili.com/437966767/fans/follow?tagid=-1")
-//    chromeDriver.navigate().refresh()
-
-
+    chromeDriver.get("https://space.bilibili.com/$mid/fans/follow?tagid=-1")
     try {
         while (true) {
             val webDriverWait = WebDriverWait(chromeDriver, Duration.ofSeconds(5))
@@ -67,9 +72,6 @@ fun main() {
     }catch (e: Exception) {
         println(e)
     }
-
-    Thread.sleep(1000L)
-
 }
 
 fun exportToCsv(fileName: String, headers: List<String>, data: List<ListItem>) {
@@ -77,8 +79,8 @@ fun exportToCsv(fileName: String, headers: List<String>, data: List<ListItem>) {
     val writer = BufferedWriter(OutputStreamWriter(FileOutputStream(fileName, true), "utf-8"))
     writer.use {
         // 写入CSV的头部
-        it.write(headers.joinToString(","))
-        it.newLine()
+        /*it.write(headers.joinToString(","))
+        it.newLine()*/
 
         // 写入每行数据
         data.forEach { item ->
@@ -101,8 +103,12 @@ fun convertTimestampToDateTime(timestamp: Long): LocalDateTime {
 }
 
 fun followByMid(driver: ChromeDriver, mid: String) {
-    val followBtn = driver.findElement(By.className("h-f-btn h-follow"))
-    println(followBtn)
+    driver.get("https://space.bilibili.com/$mid")
+    val webDriverWait = WebDriverWait(driver, Duration.ofSeconds(2))
+    val re = webDriverWait.until { t ->
+        t.findElement(By.cssSelector(".h-f-btn.h-follow"))
+    }
+    re.click()
 }
 
 
