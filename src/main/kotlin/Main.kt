@@ -31,8 +31,13 @@ fun main() {
         setExperimentalOption("debuggerAddress", "localhost:9222")
     }
     val chromeDriver = ChromeDriver(options)
+
+//    根据csv文件关注
+    followAll(chromeDriver,"result.csv")
     File("result.csv").delete()
-    exportAllFollowByMid(chromeDriver,"437966767")
+
+//    导出到csv
+//    exportAllFollowByMid(chromeDriver,"437966767")
 
 
     Thread.sleep(1000L)
@@ -104,11 +109,24 @@ fun convertTimestampToDateTime(timestamp: Long): LocalDateTime {
 
 fun followByMid(driver: ChromeDriver, mid: String) {
     driver.get("https://space.bilibili.com/$mid")
-    val webDriverWait = WebDriverWait(driver, Duration.ofSeconds(2))
-    val re = webDriverWait.until { t ->
-        t.findElement(By.cssSelector(".h-f-btn.h-follow"))
+    try {
+        val webDriverWait = WebDriverWait(driver, Duration.ofSeconds(2))
+        val re = webDriverWait.until { t ->
+            t.findElement(By.cssSelector(".h-f-btn.h-follow"))
+        }
+        re.click()
+    }catch (e: Exception) {
+        println(e)
     }
-    re.click()
+
+}
+
+fun followAll(driver: ChromeDriver, fileName: String) {
+    File(fileName).bufferedReader(Charsets.UTF_8).
+            forEachLine { text ->
+                val values = text.split(",").map { it.trim() }
+                followByMid(driver, values[0])
+            }
 }
 
 
