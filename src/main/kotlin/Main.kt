@@ -62,7 +62,7 @@ fun main() {
         println("未登录，请重试")
         return
     }
-
+    chromeDriver.get("https://www.bilibili.com/")
     var cookies = chromeDriver.manage().cookies
     val gson = Gson()
     var encodeToString = gson.toJson(cookies)
@@ -78,7 +78,12 @@ fun main() {
             exportAllFollowByMid(chromeDriver,mid)
         } else if (next == "2") {
             followAll(chromeDriver,"result.csv")
-        } else {
+        } else if (next == "3") {
+            println("请输入用户mid")
+            var mid = sc.next()
+            exportAllFanByMid(chromeDriver,mid)
+        }
+        else {
             println("退出")
             break
         }
@@ -94,7 +99,7 @@ fun main() {
 
 fun showMenu() {
 //    打印功能 1. 导出所有关注列表 2.从csv关注所有
-    println("请选择功能：1. 导出所有关注列表 \n2.从csv关注所有")
+    println("请选择功能：1. 导出所有关注列表 \n2.从csv关注所有\n3.导出所有粉丝列表\n其他输入退出应用")
 }
 
 fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
@@ -118,6 +123,42 @@ fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
         }
     })
     chromeDriver.get("https://space.bilibili.com/$mid/fans/follow?tagid=-1")
+    try {
+        while (true) {
+            val webDriverWait = WebDriverWait(chromeDriver, Duration.ofSeconds(5))
+            val re = webDriverWait.until { t ->
+                t.findElement(By.xpath("//button[text()='下一页']"))
+            }
+            Thread.sleep(1000L)
+            re.click()
+        }
+    }catch (e: Exception) {
+        println(e)
+    }
+}
+
+fun exportAllFanByMid(chromeDriver: ChromeDriver,mid: String) {
+    NetworkInterceptor(chromeDriver, Filter { next ->
+        HttpHandler { req ->
+            val execute = next.execute(req)
+//        println(req.uri)
+            if (req.uri.contains("x/relation/fans")) {
+                println(req.uri)
+                val jsonStr = execute.content.get().bufferedReader(Charsets.UTF_8).readLine()
+                println(jsonStr)
+                val data = Json {
+                    ignoreUnknownKeys = true
+                }.decodeFromString<MyData>(jsonStr)
+//            println(data)
+                exportToCsv("result.csv", listOf("id", "用户名", "关注时间", "用户签名", "头像"), data.data!!.list)
+                val r = data.data!!.list.map { it.uname }.joinToString("\n")
+                println(r)
+                println(execute.content.get().bufferedReader(Charsets.UTF_8).readLine())
+            }
+            execute
+        }
+    })
+    chromeDriver.get("https://space.bilibili.com/$mid/relation/fans")
     try {
         while (true) {
             val webDriverWait = WebDriverWait(chromeDriver, Duration.ofSeconds(5))
