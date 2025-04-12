@@ -1,15 +1,17 @@
 package org.coderpwh
 
 
+import com.google.common.reflect.TypeToken
+import com.google.gson.Gson
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.openqa.selenium.By
-import org.openqa.selenium.WebElement
+import org.openqa.selenium.Cookie
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.devtools.NetworkInterceptor
 import org.openqa.selenium.remote.http.Filter
 import org.openqa.selenium.remote.http.HttpHandler
-import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import pojo.ListItem
 import pojo.MyData
@@ -17,30 +19,60 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStreamWriter
+import java.lang.reflect.Type
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import kotlin.coroutines.coroutineContext
+import java.util.Scanner
 
 
 fun main() {
     //windows: ./chrome --remote-debugging-port=9222 --user-data-dir='D:\temp\aa1'
     //mac: open -a "Google Chrome" --args --remote-debugging-port=9222 --user-data-dir="/Users/pwhcoder/temp"
+    println("正在启动项目...")
+
     val options = ChromeOptions().apply {
-        setExperimentalOption("debuggerAddress", "localhost:9222")
+//        this.setBrowserVersion("131")
+//        setExperimentalOption("debuggerAddress", "localhost:9222")
     }
     val chromeDriver = ChromeDriver(options)
+    chromeDriver.get("https://www.bilibili.com/")
+//    判断文件是否存在，如果存在，则不用登录，否则登录并保存cookie
+    if (File("cookie.json").exists()) {
+        var readText = File("cookie.json").readText()
+        var gson = Gson()
+        val typeToken: Type = object : TypeToken<MutableSet<Cookie>>() {}.type
+        var cookieList = gson.fromJson<MutableSet<Cookie>>(readText, typeToken)
+        cookieList.forEach {
+            chromeDriver.manage().addCookie(it)
+        }
+    } else {
+        println("请登录b站,登录成功输入y")
+        var next = Scanner(System.`in`).next()
+        if (next != "y") {
+            println("未登录")
+            return
+        }
+    }
+    var cookieNamed = chromeDriver.manage().getCookieNamed("bili_jct")
+    if (cookieNamed != null) {
+        println("登录成功")
+    } else {
+        println("未登录，请重试")
+        return
+    }
 
-//    根据csv文件关注
-    followAll(chromeDriver,"result.csv")
-    File("result.csv").delete()
+    var cookies = chromeDriver.manage().cookies
+    val gson = Gson()
+    var encodeToString = gson.toJson(cookies)
+    File("cookie.json").writeText(encodeToString)
 
-//    导出到csv
-//    exportAllFollowByMid(chromeDriver,"437966767")
+        followAll(chromeDriver,"result.csv")
+//    File("result.csv").delete()
 
-
-    Thread.sleep(1000L)
+//    导出到csv   437966767 9824766
+//        exportAllFollowByMid(chromeDriver,"946974")
 
 }
 
@@ -69,7 +101,7 @@ fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
         while (true) {
             val webDriverWait = WebDriverWait(chromeDriver, Duration.ofSeconds(5))
             val re = webDriverWait.until { t ->
-                t.findElement(By.className("be-pager-next"))
+                t.findElement(By.xpath("//button[text()='下一页']"))
             }
             Thread.sleep(1000L)
             re.click()
@@ -112,7 +144,7 @@ fun followByMid(driver: ChromeDriver, mid: String) {
     try {
         val webDriverWait = WebDriverWait(driver, Duration.ofSeconds(2))
         val re = webDriverWait.until { t ->
-            t.findElement(By.cssSelector(".h-f-btn.h-follow"))
+            t.findElement(By.cssSelector(".follow-btn"))
         }
         re.click()
     }catch (e: Exception) {
