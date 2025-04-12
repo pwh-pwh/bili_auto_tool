@@ -68,12 +68,33 @@ fun main() {
     var encodeToString = gson.toJson(cookies)
     File("cookie.json").writeText(encodeToString)
 
-        followAll(chromeDriver,"result.csv")
+    val sc = Scanner(System.`in`)
+    while (true) {
+        showMenu()
+        var next = sc.next()
+        if (next == "1") {
+            println("请输入用户mid")
+            var mid = sc.next()
+            exportAllFollowByMid(chromeDriver,mid)
+        } else if (next == "2") {
+            followAll(chromeDriver,"result.csv")
+        } else {
+            println("退出")
+            break
+        }
+    }
+
+//        followAll(chromeDriver,"result.csv")
 //    File("result.csv").delete()
 
 //    导出到csv   437966767 9824766
 //        exportAllFollowByMid(chromeDriver,"946974")
 
+}
+
+fun showMenu() {
+//    打印功能 1. 导出所有关注列表 2.从csv关注所有
+    println("请选择功能：1. 导出所有关注列表 \n2.从csv关注所有")
 }
 
 fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
