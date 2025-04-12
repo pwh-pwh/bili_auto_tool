@@ -3,7 +3,6 @@ package org.coderpwh
 
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
@@ -24,7 +23,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
-import java.util.Scanner
+import java.util.*
 
 
 fun main() {
@@ -33,7 +32,8 @@ fun main() {
     println("正在启动项目...")
 
     val options = ChromeOptions().apply {
-//        this.setBrowserVersion("131")
+        this.setBrowserVersion("135")
+//        135.0.7049.85
 //        setExperimentalOption("debuggerAddress", "localhost:9222")
     }
     val chromeDriver = ChromeDriver(options)
