@@ -30,16 +30,18 @@ fun main() {
     //windows: ./chrome --remote-debugging-port=9222 --user-data-dir='D:\temp\aa1'
     //mac: open -a "Google Chrome" --args --remote-debugging-port=9222 --user-data-dir="/Users/pwhcoder/temp"
     println("正在启动项目...")
-
+    var cookieExist = File("cookie.json").exists()
     val options = ChromeOptions().apply {
         this.setBrowserVersion("135")
-//        135.0.7049.85
+        if (cookieExist) {
+            addArguments("--headless")
+        }
 //        setExperimentalOption("debuggerAddress", "localhost:9222")
     }
     val chromeDriver = ChromeDriver(options)
     chromeDriver.get("https://www.bilibili.com/")
 //    判断文件是否存在，如果存在，则不用登录，否则登录并保存cookie
-    if (File("cookie.json").exists()) {
+    if (cookieExist) {
         var readText = File("cookie.json").readText()
         var gson = Gson()
         val typeToken: Type = object : TypeToken<MutableSet<Cookie>>() {}.type
