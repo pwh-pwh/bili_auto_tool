@@ -1,14 +1,17 @@
 package org.coderpwh
 
 
+import com.github.dockerjava.api.model.Driver
 import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import kotlinx.serialization.json.Json
 import org.openqa.selenium.By
 import org.openqa.selenium.Cookie
+import org.openqa.selenium.WebElement
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
 import org.openqa.selenium.devtools.NetworkInterceptor
+import org.openqa.selenium.interactions.Actions
 import org.openqa.selenium.remote.http.Filter
 import org.openqa.selenium.remote.http.HttpHandler
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -220,7 +223,8 @@ fun followByMid(driver: ChromeDriver, mid: String, duration: Duration = Duration
         val re = webDriverWait.until { t ->
             t.findElement(By.cssSelector(".follow-btn"))
         }
-        re.click()
+//        re.click()
+        re.clickElement(driver)
         return true
     } catch (e: Exception) {
         println(e)
@@ -247,6 +251,27 @@ fun followAll(driver: ChromeDriver, fileName: String, batchNum: Int = 50, durati
     }
     println("运行成功")
     println("已经成功关注数量 $count")
+}
+
+fun WebElement.clickElement(driver: ChromeDriver) {
+    val location = this.location
+    val size = this.size
+    // 按钮的左上角坐标
+    val x = location.x
+    val y = location.y
+    // 按钮的宽度和高度
+    val width = size.width
+    val height = size.height
+    // 随机生成点击的偏移量
+    val offsetX = Random.nextInt(width)  // x轴的偏移
+    val offsetY = Random.nextInt(height) // y轴的偏移
+    // 计算随机点击的位置
+    val clickX = x + offsetX
+    val clickY = y + offsetY
+//    println("随机点击位置: ($clickX, $clickY)")
+    // 使用 Actions 点击指定位置
+    val actions = Actions(driver)
+    actions.moveByOffset(clickX, clickY).click().perform()
 }
 
 
