@@ -232,25 +232,39 @@ fun followByMid(driver: ChromeDriver, mid: String, duration: Duration = Duration
     return false
 }
 
-fun followAll(driver: ChromeDriver, fileName: String, batchNum: Int = 50, duration: Duration = Duration.ofMillis(500)) {
+fun followAll(driver: ChromeDriver, fileName: String, batchNum: Int = 50, duration: Duration = Duration.ofMillis(800)) {
     var count = 0
-    File(fileName).bufferedReader(Charsets.UTF_8).forEachLine { text ->
+    var accountList = mutableListOf<String>()
+    val r = File(fileName).bufferedReader(Charsets.UTF_8)
+    r.readLines().forEach { text ->
+        println(text)
         val values = text.split(",").map { it.trim() }
         val isSuc = followByMid(driver, values[0])
+        Thread.sleep(Duration.ofMillis(200))
         if (count % batchNum == 0) {
             Thread.sleep(duration.multipliedBy(4))
         }
         if (isSuc) {
             count++
+            accountList.add(values[0])
             println("关注成功 up主：${values[1]} uid:${values[0]}")
         } else {
             println("已经成功关注数量 $count")
             println("关注失败，触发风控，停止运行")
-            return@forEachLine
+            return
         }
     }
     println("运行成功")
     println("已经成功关注数量 $count")
+//    将accountList写入文件
+    File("accountList.txt")
+        .printWriter().also {
+            accountList.forEach {
+                item ->
+                it.println(item)
+            }
+        }
+
 }
 
 fun WebElement.clickElement(driver: ChromeDriver) {
@@ -268,10 +282,11 @@ fun WebElement.clickElement(driver: ChromeDriver) {
     // 计算随机点击的位置
     val clickX = x + offsetX
     val clickY = y + offsetY
-//    println("随机点击位置: ($clickX, $clickY)")
+    println("随机点击位置: ($clickX, $clickY)")
     // 使用 Actions 点击指定位置
     val actions = Actions(driver)
-    actions.moveByOffset(clickX, clickY).click().perform()
+    actions.moveToElement(this, offsetX, offsetY).click(this).perform()
+//    actions.moveByOffset(clickX, clickY).click().perform()
 }
 
 
