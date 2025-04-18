@@ -24,16 +24,25 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.*
+import kotlin.random.Random
 
 
-fun main() {
+fun main(args: Array<String>) {
     //windows: ./chrome --remote-debugging-port=9222 --user-data-dir='D:\temp\aa1'
     //mac: open -a "Google Chrome" --args --remote-debugging-port=9222 --user-data-dir="/Users/pwhcoder/temp"
     println("正在启动项目...")
+//    可配置参数
+    val keyValuePairs = args
+        .filter { it.contains("=") }
+        .map {
+            val (key, value) = it.split("=", limit = 2)
+            key to value
+        }
+        .toMap()
     var cookieExist = File("cookie.json").exists()
     val options = ChromeOptions().apply {
         this.setBrowserVersion("135")
-        if (cookieExist) {
+        if (cookieExist && !args.contains("-v")) {
             addArguments("--headless")
         }
 //        setExperimentalOption("debuggerAddress", "localhost:9222")
@@ -77,15 +86,14 @@ fun main() {
         if (next == "1") {
             println("请输入用户mid")
             var mid = sc.next()
-            exportAllFollowByMid(chromeDriver,mid)
+            exportAllFollowByMid(chromeDriver, mid)
         } else if (next == "2") {
-            followAll(chromeDriver,"result.csv")
+            followAll(chromeDriver, "result.csv")
         } else if (next == "3") {
             println("请输入用户mid")
             var mid = sc.next()
-            exportAllFanByMid(chromeDriver,mid)
-        }
-        else {
+            exportAllFanByMid(chromeDriver, mid)
+        } else {
             println("退出")
             break
         }
@@ -104,7 +112,7 @@ fun showMenu() {
     println("请选择功能：1. 导出所有关注列表 \n2.从csv关注所有\n3.导出所有粉丝列表\n其他输入退出应用")
 }
 
-fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
+fun exportAllFollowByMid(chromeDriver: ChromeDriver, mid: String) {
     NetworkInterceptor(chromeDriver, Filter { next ->
         HttpHandler { req ->
             val execute = next.execute(req)
@@ -134,12 +142,12 @@ fun exportAllFollowByMid(chromeDriver: ChromeDriver,mid: String) {
             Thread.sleep(1000L)
             re.click()
         }
-    }catch (e: Exception) {
+    } catch (e: Exception) {
         println(e)
     }
 }
 
-fun exportAllFanByMid(chromeDriver: ChromeDriver,mid: String) {
+fun exportAllFanByMid(chromeDriver: ChromeDriver, mid: String) {
     NetworkInterceptor(chromeDriver, Filter { next ->
         HttpHandler { req ->
             val execute = next.execute(req)
@@ -170,7 +178,7 @@ fun exportAllFanByMid(chromeDriver: ChromeDriver,mid: String) {
             Thread.sleep(1000L)
             re.click()
         }
-    }catch (e: Exception) {
+    } catch (e: Exception) {
         println(e)
     }
 }
@@ -203,26 +211,42 @@ fun convertTimestampToDateTime(timestamp: Long): LocalDateTime {
     return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault())
 }
 
-fun followByMid(driver: ChromeDriver, mid: String) {
+fun followByMid(driver: ChromeDriver, mid: String, duration: Duration = Duration.ofMillis(500)): Boolean {
     driver.get("https://space.bilibili.com/$mid")
     try {
         val webDriverWait = WebDriverWait(driver, Duration.ofSeconds(2))
+        val r = Random(System.currentTimeMillis()).nextInt(500)
+        Thread.sleep(duration.plus(Duration.ofMillis(r.toLong())))
         val re = webDriverWait.until { t ->
             t.findElement(By.cssSelector(".follow-btn"))
         }
         re.click()
-    }catch (e: Exception) {
+        return true
+    } catch (e: Exception) {
         println(e)
     }
-
+    return false
 }
 
-fun followAll(driver: ChromeDriver, fileName: String) {
-    File(fileName).bufferedReader(Charsets.UTF_8).
-            forEachLine { text ->
-                val values = text.split(",").map { it.trim() }
-                followByMid(driver, values[0])
-            }
+fun followAll(driver: ChromeDriver, fileName: String, batchNum: Int = 50, duration: Duration = Duration.ofMillis(500)) {
+    var count = 0
+    File(fileName).bufferedReader(Charsets.UTF_8).forEachLine { text ->
+        val values = text.split(",").map { it.trim() }
+        val isSuc = followByMid(driver, values[0])
+        if (count % batchNum == 0) {
+            Thread.sleep(duration.multipliedBy(4))
+        }
+        if (isSuc) {
+            count++
+            println("关注成功 up主：${values[1]} uid:${values[0]}")
+        } else {
+            println("已经成功关注数量 $count")
+            println("关注失败，触发风控，停止运行")
+            return@forEachLine
+        }
+    }
+    println("运行成功")
+    println("已经成功关注数量 $count")
 }
 
 
